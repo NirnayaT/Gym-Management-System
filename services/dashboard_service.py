@@ -11,3 +11,7 @@ class Members:
     
     def add_new_member():
         pass
+
+class Payments:
+    def display_payment_list():
+        pass
