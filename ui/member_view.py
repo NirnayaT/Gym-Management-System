@@ -3,6 +3,8 @@ from services.dashboard_service import Members
 
 
 def open_member_frame(right_panel):
+    for widget in right_panel.winfo_children():
+        widget.destroy()
     member_window = tk.Frame(right_panel, bg="white")
     member_window.pack(side="right", fill="both", expand=True, padx=10, pady=10)
 
@@ -62,4 +64,6 @@ def open_member_frame(right_panel):
         width=30
     )
     search_box.pack(side="left", padx=10, pady=10)
+    
+    return member_window
 
