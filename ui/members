@@ -1,0 +1,263 @@
+import tkinter as tk
+from PIL import Image, ImageTk
+from decouple import config
+import pandas as pd
+import os
+from tkcalendar import DateEntry
+
+# Configuration (Logo and Size)
+logo_path = config("LOGO_PATH")
+new_width = int(config("NEW_WIDTH"))
+new_height = int(config("NEW_HEIGHT"))
+
+file_directory = "/Users/enyousgurung/Desktop/Gym-Management-System"
+file_name = "data.xlsx"
+file_path = os.path.join(file_directory, file_name)
+
+# Tkinter root window
+root = tk.Tk()
+root.title("Gym Management System")
+root.geometry("800x600")  # Window size
+
+# Function to toggle member panel visibility
+def toggle_member_panel():
+    if member_panel.winfo_ismapped(): 
+        member_panel.grid_forget()
+    else:  # Otherwise, show it
+        member_panel.grid(row=0, column=1, rowspan=2, padx=10, pady=10)
+
+# Function to open the "Add New Member" window
+def open_add_member_window():
+    form_window = tk.Toplevel(root)
+    form_window.title("Add New Member")
+    form_window.geometry("800x600")
+    
+    # Step 1: Form fields
+    step_1_frame = tk.Frame(form_window)
+    step_1_frame.grid(row=0, column=0, padx=10, pady=10)
+    
+    # form fields for user input (with visual required fields)
+    first_name_label = tk.Label(step_1_frame, text="First Name *", font=("Arial", 12))
+    first_name_label.grid(row=0, column=0, sticky="e", padx=10, pady=10)
+    first_name_entry = tk.Entry(step_1_frame, font=("Arial", 12))
+    first_name_entry.grid(row=0, column=1, padx=10, pady=10)
+
+    middle_name_label = tk.Label(step_1_frame, text="Middle Name", font=("Arial", 12))
+    middle_name_label.grid(row=0, column=2, sticky="e", padx=10, pady=10)
+    middle_name_entry = tk.Entry(step_1_frame, font=("Arial", 12))
+    middle_name_entry.grid(row=0, column=3, padx=10, pady=10)
+
+
+    last_name_label = tk.Label(step_1_frame, text="Last Name *", font=("Arial", 12))
+    last_name_label.grid(row=0, column=4, sticky="e", padx=10, pady=10)
+    last_name_entry = tk.Entry(step_1_frame, font=("Arial", 12))
+    last_name_entry.grid(row=0, column=5, padx=10, pady=10)
+    
+    birthdate_label = tk.Label(step_1_frame, text="Birth Date *", font=("Arial", 12))
+    birthdate_label.grid(row=1, column=0, sticky="e", padx=10, pady=10)
+    birthdate_entry = tk.Entry(step_1_frame, font=("Arial", 12))
+    birthdate_entry = DateEntry(step_1_frame, selectmode='day', date_pattern='yyyy-mm-dd')
+    birthdate_entry.grid(row=1, column=1, padx=10, pady=10,)
+    
+     # Dropdown for gender
+    sex_label = tk.Label(step_1_frame, text="sex *", font=("Arial", 12))
+    sex_label.grid(row=1, column=2, sticky="e", padx=10, pady=10)
+    sex_options = ["Select", "Female", "Male"]
+    sex_var = tk.StringVar()
+    sex_var.set(sex_options[0])
+    sex_dropdown = tk.OptionMenu(step_1_frame, sex_var, *sex_options)
+    sex_dropdown.grid(row=1, column=3, padx=10, pady=10)
+    
+    address_label = tk.Label(step_1_frame, text="Address *", font=("Arial", 12))
+    address_label.grid(row=2, column=0, sticky="e", padx=10, pady=10)
+    address_entry = tk.Entry(step_1_frame, font=("Arial", 12))
+    address_entry.grid(row=2, column=1, padx=10, pady=10)
+
+    contact_label = tk.Label(step_1_frame, text="Phone No *", font=("Arial", 12))
+    contact_label.grid(row=2, column=2, sticky="e", padx=10, pady=10)
+    contact_entry = tk.Entry(step_1_frame, font=("Arial", 12))
+    contact_entry.grid(row=2, column=3, padx=10, pady=10)
+
+    # Dropdown for Experience
+    experience_label = tk.Label(step_1_frame, text="Experience:", font=("Arial", 12))
+    experience_label.grid(row=4, column=0, sticky="e", padx=10, pady=10)
+    experience_options = ["Select", "Beginner", "Intermediate", "Professional"]
+    experience_var = tk.StringVar()
+    experience_var.set(experience_options[0])  # Default value
+    experience_dropdown = tk.OptionMenu(step_1_frame, experience_var, *experience_options)
+    experience_dropdown.grid(row=4, column=1, padx=10, pady=10)
+
+    # Dropdown for Purpose
+    purpose_label = tk.Label(step_1_frame, text="Purpose:", font=("Arial", 12))
+    purpose_label.grid(row=4, column=2, sticky="e", padx=10, pady=10)
+    purpose_options = ["Select", "Cardio", "Heavy Lifting", "Weight loss", "Others"]
+    purpose_var = tk.StringVar()
+    purpose_var.set(purpose_options[0]) 
+    purpose_dropdown = tk.OptionMenu(step_1_frame, purpose_var, *purpose_options)
+    purpose_dropdown.grid(row=4, column=3, padx=10, pady=10)
+
+    # Error label for validation messages
+    error_label = tk.Label(form_window, text="", font=("Arial", 12), fg="red")
+    error_label.grid(row=5, column=0, columnspan=2, pady=10)
+
+    step_2_frame = tk.Frame(form_window)
+    step_3_frame = tk.Frame(form_window)
+
+    step = 1  
+
+    def next_step():
+        nonlocal step
+        # Check if all required fields are filled
+        if not (first_name_entry.get() and last_name_entry.get() and address_entry.get() and contact_entry.get()):
+            error_label.config(text="All fields marked with * are required!", fg="red")
+            return
+        error_label.config(text="")  # Clear error message if valid
+        
+        if step == 1:
+            # Hide Step 1 and Show Step 2 (Subscription)
+            step_1_frame.grid_forget()
+            step_2_frame.grid(row=0, column=0, padx=10, pady=10)
+            step = 2
+        elif step == 2:
+            # Hide Step 2 and Show Step 3 (Photo Upload)
+            step_2_frame.grid_forget()
+            step_3_frame.grid(row=0, column=0, padx=10, pady=10)
+            step = 3
+
+    def back_step():
+        nonlocal step
+        if step == 2:
+            # Hide Step 2 and Show Step 1
+            step_2_frame.grid_forget()
+            step_1_frame.grid(row=0, column=0, padx=10, pady=20)
+            step = 1
+        elif step == 3:
+            # Hide Step 3 and Show Step 2
+            step_3_frame.grid_forget()
+            step_2_frame.grid(row=0, column=0, padx=10, pady=10)
+            step = 2
+
+    def save_to_excel():
+        # Gather data from the fields
+        first_name = first_name_entry.get()
+        middle_name = middle_name_entry.get() 
+        last_name = last_name_entry.get()
+        birthdate = birthdate_entry.get()
+        sex = sex_var.get()
+        address = address_entry.get()
+        contact = contact_entry.get()
+        experience = experience_var.get()
+        purpose = purpose_var.get()
+
+        # Check if all required fields are filled (middle name is optional)
+        if not (first_name and last_name and address and contact):
+            error_label.config(text="All fields marked with * are required!", fg="red")
+            return
+        error_label.config(text="")  # Clear error message if valid
+
+        # Prepare data as a dictionary
+        new_member_data = {
+            "first Name": first_name,
+            "middle name": middle_name, 
+            "last name": last_name,
+            "Birth Date": birthdate,
+            "Sex": sex,
+            "Address": address,
+            "Contact": contact,
+            "Experience": experience,
+            "Purpose": purpose
+        }
+
+        # Check if the Excel file exists and load it, or create a new dataframe
+        if os.path.exists(file_path):
+            df = pd.read_excel(file_path)
+        else:
+            df = pd.DataFrame(columns=["first name", "middle", "last name", "BirthDate", "Sex", "Address", "Contact", "Experience", "Purpose"])
+
+        # Convert the new data to a DataFrame to be able to use pd.concat
+        new_member_df = pd.DataFrame([new_member_data])
+
+        # Concatenate the new member data with the existing DataFrame
+        df = pd.concat([df, new_member_df], ignore_index=True)
+
+        # Save the updated data back to Excel
+        df.to_excel(file_path, index=False)
+
+        # Close the form window after saving
+        form_window.destroy()
+
+    # Next button to proceed to next step
+    next_button = tk.Button(form_window, text="Next", font=("Arial", 14), width=12, height=2, command=next_step)
+    next_button.grid(row=6, column=0, pady=10, padx=10)
+
+    #####################
+    # Step 2 - Subscription (add subscription details here)
+    subscription_label = tk.Label(step_2_frame, text="Enter Subscription Details:", font=("Arial", 12))
+    subscription_label.grid(row=0, column=0, padx=10, pady=10)
+    
+    subscription_label_back_button = tk.Button(form_window, text="Back", font=("Arial", 14), width=12, height=2, command=back_step)
+    subscription_label_back_button.grid(row=6, column=1, pady=10, padx=10)
+    
+    #####################
+    # Step 3 - Photo Upload (add photo upload functionality)
+    photo_label = tk.Label(step_3_frame, text="Upload Photo:", font=("Arial", 12))
+    photo_label.grid(row=0, column=0, padx=10, pady=10)
+    
+    photo_label_back_button = tk.Button(form_window, text="Back", font=("Arial", 14), width=12, height=2, command=back_step)
+    photo_label_back_button.grid(row=6, column=1, pady=10, padx=10)
+
+    ######################
+    # Save button to save data to Excel 
+    save_button = tk.Button(form_window, text="Save", font=("Arial", 14), width=12, height=2, command=save_to_excel)
+    save_button.grid(row=7, column=0, pady=10, padx=10)
+
+# main logo frame
+logo_frame = tk.Frame(root)
+logo_frame.grid(row=0, column=0, padx=20, pady=10)
+
+logo = Image.open(logo_path)
+logo_resized = logo.resize((new_width, new_height))
+logo_tk = ImageTk.PhotoImage(logo_resized)
+
+logo_label = tk.Label(logo_frame, image=logo_tk)
+logo_label.grid(row=0, column=0, padx=10, pady=10)
+
+# main dashboard frame
+dashboard_frame = tk.Frame(root, bg="white", bd=1, relief="solid")
+dashboard_frame.grid(row=1, column=0, padx=20, pady=10, sticky="news")
+
+# Dashboard Button
+dashboard_button = tk.Button(dashboard_frame, text="Dashboard", font=("Arial", 16))
+dashboard_button.grid(row=0, column=0, padx=20, pady=10, sticky="news")
+
+# Members Button to toggle member panel visibility
+members_button = tk.Button(dashboard_frame, text="Members", font=("Arial", 16), command=toggle_member_panel)
+members_button.grid(row=1, column=0, padx=20, pady=10, sticky="news")
+
+# Member panel (side panel)
+member_panel = tk.Frame(root, bg="lightgray", width=300, height=600)
+
+# buttons and widgets (member panel)
+display_member_list_button = tk.Button(member_panel, text="Display Member List", font=("Arial", 16))
+display_member_list_button.grid(row=0, column=0, padx=20, pady=10, sticky="ew")
+
+add_new_member_button = tk.Button(member_panel, text="Add New Member", font=("Arial", 16), command=open_add_member_window)
+add_new_member_button.grid(row=1, column=0, padx=20, pady=10, sticky="ew")
+
+close_button = tk.Button(member_panel, text="Close Panel", font=("Arial", 10), command=toggle_member_panel)
+close_button.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
+
+# search frame inside member panel
+inside_frame = tk.Frame(member_panel, bg="white", bd=1, relief="solid", height=150)
+inside_frame.grid(row=3, column=0, padx=20, pady=10, sticky="ew")
+
+search_label = tk.Label(inside_frame, text="Search:", font=("Arial", 12))
+search_label.grid(row=0, column=0)
+
+search_box = tk.Entry(inside_frame)
+search_box.grid(row=0, column=1, padx=10, pady=10)
+
+# Reference for the logo image to prevent garbage collection
+logo_label.image = logo_tk
+
+root.mainloop()
