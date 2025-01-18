@@ -8,6 +8,7 @@ class PaymentsManager(ttk.Frame):
     def __init__(self, parent, db):
         super().__init__(parent)
         self.db = db
+        self.pack(fill=tk.BOTH, expand=True)
         self.create_widgets()
         self.load_payments_data()
 
@@ -21,26 +22,26 @@ class PaymentsManager(ttk.Frame):
         form_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nsew")
 
         # Member Selection
-        ttk.Label(form_frame, text="Member:").grid(row=0, column=0, sticky="w")
+        ttk.Label(form_frame, text="Member:",style="Body.TLabel").grid(row=0, column=0, sticky="w")
         self.member_var = tk.StringVar()
         self.member_combo = ttk.Combobox(form_frame, textvariable=self.member_var)
         self.member_combo.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
         self.load_members()
 
         # Amount Entry
-        ttk.Label(form_frame, text="Amount:").grid(row=1, column=0, sticky="w")
+        ttk.Label(form_frame, text="Amount:",style="Body.TLabel").grid(row=1, column=0, sticky="w")
         self.amount_entry = ttk.Entry(form_frame)
         self.amount_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 
         # Payment Type Selection
-        ttk.Label(form_frame, text="Payment Type:").grid(row=2, column=0, sticky="w")
+        ttk.Label(form_frame, text="Payment Type:",style="Body.TLabel").grid(row=2, column=0, sticky="w")
         self.payment_type = ttk.Combobox(
             form_frame, values=["Cash", "Card", "Esewa", "Bank Transfer"]
         )
         self.payment_type.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
 
         # Payment Status Selection
-        ttk.Label(form_frame, text="Status:").grid(row=3, column=0, sticky="w")
+        ttk.Label(form_frame, text="Status:",style="Body.TLabel").grid(row=3, column=0, sticky="w")
         self.payment_status = ttk.Combobox(
             form_frame, values=["Completed", "Pending", "Failed"]
         )
@@ -49,10 +50,10 @@ class PaymentsManager(ttk.Frame):
         # Action Buttons
         btn_frame = ttk.Frame(form_frame)
         btn_frame.grid(row=4, column=0, columnspan=2, pady=15)
-        ttk.Button(btn_frame, text="Add Payment", command=self.add_payment).pack(
+        ttk.Button(btn_frame, text="Add Payment", command=self.add_payment,style="Primary.TButton").pack(
             side=tk.LEFT, padx=5
         )
-        ttk.Button(btn_frame, text="Clear", command=self.clear_form).pack(
+        ttk.Button(btn_frame, text="Clear", command=self.clear_form, style="Primary.TButton").pack(
             side=tk.LEFT, padx=5
         )
 

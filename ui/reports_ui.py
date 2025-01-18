@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import seaborn as sns
+from matplotlib.dates import DateFormatter
 
 
 class ReportsManager(ttk.Frame):
@@ -113,6 +113,12 @@ class ReportsManager(ttk.Frame):
         fig, ax = plt.subplots(figsize=(10, 6))
         daily_attendance = df.groupby("date")["member_id"].count()
 
+        # Set y-axis range from 0 to 100
+        ax.set_ylim(0, 50)
+        ax.set_yticks(range(0, 51, 10))
+
+        # Format x-axis dates
+        ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
         line = ax.plot(daily_attendance.index, daily_attendance.values, marker="o")[0]
 
         for x, y in zip(daily_attendance.index, daily_attendance.values):
@@ -121,13 +127,6 @@ class ReportsManager(ttk.Frame):
         ax.set_title(f"Daily Attendance Trends - {date_range}")
         ax.set_xlabel("Date")
         ax.set_ylabel("Number of Members")
-
-        max_attendance = (
-            daily_attendance.values.max() if not daily_attendance.empty else 10
-        )
-        y_limit = max(10, int(max_attendance * 1.2))
-        ax.set_ylim(0, y_limit)
-        ax.set_yticks(range(0, y_limit + 1, max(1, y_limit // 10)))
 
         plt.xticks(rotation=45)
         plt.tight_layout()

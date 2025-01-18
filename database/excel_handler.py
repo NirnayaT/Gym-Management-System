@@ -1,3 +1,4 @@
+import shutil
 import pandas as pd
 import os
 from datetime import datetime
@@ -50,6 +51,7 @@ class ExcelDatabase:
                     columns=[
                         "id",
                         "member_id",
+                        "member_name",
                         "check_in",
                         "check_out",
                         "date",
@@ -74,23 +76,24 @@ class ExcelDatabase:
             return pd.DataFrame()
 
     def save_sheet_data(self, sheet_name, df):
-        # Save data to specified sheet
         try:
+            # Read all existing sheets
             excel_data = {}
             if os.path.exists(self.database_file):
                 excel_data = pd.read_excel(self.database_file, sheet_name=None)
 
+            # Update the specific sheet
             excel_data[self.sheet_names[sheet_name]] = df
 
-            with pd.ExcelWriter(
-                self.database_file, engine="openpyxl", mode="w"
-            ) as writer:
+            # Write all sheets back to file
+            with pd.ExcelWriter(self.database_file, engine="openpyxl", mode="w") as writer:
                 for name, data in excel_data.items():
                     data.to_excel(writer, sheet_name=name, index=False)
             return True
         except Exception as e:
             print(f"Error saving {sheet_name} data: {e}")
             return False
+
 
     def add_member(self, member_data):
         # Add new member record
@@ -103,6 +106,7 @@ class ExcelDatabase:
 
     def add_payment(self, payment_data):
         # Add new payment record
+        self.backup_database()
         df = self.load_sheet_data("payments")
         payment_data["payment_id"] = len(df) + 1 if not df.empty else 1
         payment_data["payment_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -110,12 +114,25 @@ class ExcelDatabase:
         return self.save_sheet_data("payments", df)
 
     def mark_attendance(self, attendance_data):
-        # Record attendance entry
         df = self.load_sheet_data("attendance")
+        
+        # Get member's actual ID from members sheet
+        members_df = self.load_sheet_data("members")
+        member_name = attendance_data["member_id"]  # Currently storing name
+        member_row = members_df[members_df["name"] == member_name]
+        if not member_row.empty:
+            actual_member_id = member_row.iloc[0]["member_id"]
+            attendance_data["member_id"] = actual_member_id
+            attendance_data["member_name"] = member_name
+        
+        # Add new attendance record with proper IDs
         attendance_data["id"] = len(df) + 1 if not df.empty else 1
-        attendance_data["date"] = datetime.now().strftime("%Y-%m-%d")
-        df = pd.concat([df, pd.DataFrame([attendance_data])], ignore_index=True)
+        new_record = pd.DataFrame([attendance_data])
+        df = pd.concat([df, new_record], ignore_index=True)
+        
         return self.save_sheet_data("attendance", df)
+
+
 
     def update_member(self, member_id, updated_data):
         # Update existing member data
@@ -148,7 +165,6 @@ class ExcelDatabase:
         return df
 
     def get_attendance_history(self, member_id=None, date=None):
-        # Get attendance records with optional filters
         df = self.load_sheet_data("attendance")
         if member_id and date:
             return df[(df["member_id"] == member_id) & (df["date"] == date)]
@@ -157,3 +173,10 @@ class ExcelDatabase:
         elif date:
             return df[df["date"] == date]
         return df
+
+
+    def backup_database(self):
+        backup_path = f"database/backup/gym_database_{datetime.now().strftime('%Y%m%d')}.xlsx"
+        os.makedirs("database/backup", exist_ok=True)
+        if os.path.exists(self.database_file):
+            shutil.copy2(self.database_file, backup_path)

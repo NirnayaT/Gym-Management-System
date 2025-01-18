@@ -10,28 +10,102 @@ from .reports_ui import ReportsManager
 class GymManagementApp:
     def __init__(self, root):
         self.root = root
-        
-        
-        # Initialize database
         self.db = ExcelDatabase()
         
-        # Create main container with theme
+        # Create main container
         self.main_container = ttk.Frame(self.root, style='Main.TFrame')
         self.main_container.pack(fill=tk.BOTH, expand=True)
         
-        # Create header
-        self.create_header()
+        # Configure grid
+        self.main_container.grid_columnconfigure(1, weight=1)
+        self.main_container.grid_rowconfigure(0, weight=1)
         
-        # Create navigation menu
-        self.create_navigation()
+        # Create left navigation panel
+        self.create_left_panel()
         
-        # Create main content area
-        self.content_frame = ttk.Frame(self.main_container, style='Content.TFrame')
-        self.content_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
-        # Show default page (Members)
-        self.show_members_page()
+        # Create right content area
+        self.create_content_frame()
 
+        
+        # Show default page
+        self.show_home_page()
+
+    def create_left_panel(self):
+        left_panel = ttk.Frame(self.main_container, style='Navigation.TFrame')
+        left_panel.grid(row=0, column=0, sticky="ns", padx=10, pady=10)
+        
+        # Add logo at top
+        logo_img = tk.PhotoImage(file='assets/images/logo.png')
+        logo_img = logo_img.subsample(4, 4)  
+        self.logo_img = logo_img
+        
+        logo_label = ttk.Label(
+            left_panel,
+            image=logo_img,
+            style='Clean.TLabel'
+        )
+        logo_label.pack(pady=20)
+        
+        # Navigation buttons
+        nav_buttons = [
+            ["Home", self.show_home_page],
+            ["Members", self.show_members_page],
+            ["Payments", self.show_payments_page],
+            ["Attendance", self.show_attendance_page],
+            ["Reports", self.show_reports_page]
+        ]
+        
+        for text, command in nav_buttons:
+            btn = ttk.Button(
+                left_panel,
+                text=text,
+                style='Navigation.TButton',
+                command=command,
+                width=15
+            )
+            btn.pack(pady=10)
+        
+        spacer = ttk.Frame(left_panel)
+        spacer.pack(expand=True)
+        
+        # Exit button at bottom
+        exit_btn = ttk.Button(
+            left_panel,
+            text="Exit",
+            style='Navigation.TButton',
+            command=self.root.quit,
+            width=15
+        )
+        exit_btn.pack(pady=10)
+            
+        utility_frame = ttk.LabelFrame(left_panel, padding=15,text='QR Scan', style = 'Clean.TLabelframe')
+        utility_frame.pack(side=tk.BOTTOM, padx=10)
+        
+        nav_buttons_right = [
+            ("Esewa", self.show_qr_code),
+            ("Bank", self.show_bank_info),
+            ("Wifi", self.show_wifi_info),
+        ]
+        
+        for text, command in nav_buttons_right:
+            btn = ttk.Button(
+                utility_frame,
+                text=text,
+                style='Navigation.TButton',
+                command=command,
+            )
+            btn.pack(side=tk.BOTTOM, padx=5, pady=15)
+    
+    def create_content_frame(self):
+        self.content_frame = ttk.LabelFrame(
+            self.main_container, 
+            text="Gym Management System",
+            padding=15
+        )
+        self.content_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+        self.content_frame.grid_columnconfigure(0, weight=1)
+        self.content_frame.grid_rowconfigure(0, weight=1) 
+              
     def create_header(self):
         header_frame = ttk.Frame(self.main_container, style='Clean.TFrame')
         header_frame.pack(fill=tk.X)
@@ -46,7 +120,7 @@ class GymManagementApp:
         
         # Add logo
         logo_img = tk.PhotoImage(file='assets/images/logo.png')
-        logo_img = logo_img.subsample(8, 8)  
+        logo_img = logo_img.subsample(-10, -10)  
         self.logo_img = logo_img  
         
         logo_label = ttk.Label(
@@ -54,7 +128,7 @@ class GymManagementApp:
             image=logo_img,
             style='Clean.TLabel'
         )
-        logo_label.pack(side=tk.LEFT, padx=(10, 5))
+        logo_label.pack(side=tk.LEFT, padx=(20, 10))
         
         # Title with black text
         title_label = ttk.Label(
@@ -64,66 +138,67 @@ class GymManagementApp:
         )
         title_label.pack(side=tk.LEFT, padx=(5, 10))
 
+    def show_home_page(self):
+        self.clear_content()
+        dashboard_frame = ttk.Frame(self.content_frame)
+        dashboard_frame.pack(fill=tk.BOTH, expand=True)
 
-    def create_navigation(self):
-        nav_frame = ttk.Frame(self.main_container, style='Navigation.TFrame')
-        nav_frame.pack(fill=tk.X, padx=5, pady=5)
-        
-        # Navigation buttons
-        nav_buttons_left = [
-            ("Members", self.show_members_page),
-            ("Payments", self.show_payments_page),
-            ("Attendance", self.show_attendance_page),
-            ("Reports", self.show_reports_page)
-        ]
-        
-        for text, command in nav_buttons_left:
-            btn = ttk.Button(
-                nav_frame,
-                text=text,
-                style='Navigation.TButton',
-                command=command
-            )
-            btn.pack(side=tk.LEFT, padx=5)
-        
-        utility_frame = ttk.LabelFrame(nav_frame, text="QR Scan Me", padding=15, style = 'Clean.TFrame')
-        utility_frame.pack(side=tk.RIGHT, padx=10)
-        
-        nav_buttons_right = [
-            ("Esewa", self.show_qr_code),
-            ("Bank", self.show_bank_info),
-            ("Wifi", self.show_wifi_info),
-        ]
-        
-        for text, command in nav_buttons_right:
-            btn = ttk.Button(
-                utility_frame,
-                text=text,
-                style='Navigation.TButton',
-                command=command
-            )
-            btn.pack(side=tk.RIGHT, padx=5)
-            
+        # Center container
+        center_frame = ttk.Frame(dashboard_frame)
+        center_frame.place(relx=0.5, rely=0.5, anchor='center')
+
+        # Welcome Message in bold
+        welcome_label = ttk.Label(
+            center_frame,
+            text="Welcome to the Gym Management System",
+            font=('Helvetica', 24, 'bold'),
+            foreground='black'
+        )
+        welcome_label.pack()
+
+        # Visible separator line
+        separator = ttk.Separator(center_frame, orient='horizontal', style='Separator.TSeparator')
+        separator.pack(fill='x', padx=100, pady=20)
+
+        # Subtitle in italic
+        subtitle_label = ttk.Label(
+            center_frame,
+            text="Your Complete Fitness Management Solution",
+            font=('Helvetica', 16, 'italic'),
+            foreground='black'
+        )
+        subtitle_label.pack()
+
+        # Instructions
+        instruction_label = ttk.Label(
+            center_frame,
+            text="Select an option from the menu to get started",
+            font=('Helvetica', 12),
+            foreground='black'
+        )
+        instruction_label.pack(pady=20)
+
+
+         
     def show_members_page(self):
         self.clear_content()
-        members_page = MembersManager(self.content_frame, self.db)
-        members_page.pack(fill=tk.BOTH, expand=True)
+        members_manager = MembersManager(self.content_frame, self.db)
+        members_manager.pack(fill=tk.BOTH, expand=True) 
 
     def show_payments_page(self):
         self.clear_content()
-        payments_page = PaymentsManager(self.content_frame, self.db)
-        payments_page.pack(fill=tk.BOTH, expand=True)
+        payment_manager = PaymentsManager(self.content_frame, self.db)
+        payment_manager.pack(fill=tk.BOTH, expand=True)
 
     def show_attendance_page(self):
         self.clear_content()
-        attendance_page = AttendanceManager(self.content_frame, self.db)
-        attendance_page.pack(fill=tk.BOTH, expand=True)
+        attendance_manager = AttendanceManager(self.content_frame, self.db)
+        attendance_manager.pack(fill=tk.BOTH, expand=True)
 
     def show_reports_page(self):
         self.clear_content()
-        reports_page = ReportsManager(self.content_frame, self.db)
-        reports_page.pack(fill=tk.BOTH, expand=True)
-
+        report_manager = ReportsManager(self.content_frame, self.db)
+        report_manager.pack(fill=tk.BOTH, expand=True)
     def clear_content(self):
         for widget in self.content_frame.winfo_children():
             widget.destroy()
@@ -151,7 +226,7 @@ class GymManagementApp:
         
         # Load and display QR image
         qr_img = tk.PhotoImage(file='assets/images/esewa_qr_code.png')
-        qr_img = qr_img.subsample(2, 2)  # Adjust size as needed
+        qr_img = qr_img.subsample(4,4)  # Adjust size as needed
         self.qr_img = qr_img  # Keep reference
         
         qr_label = ttk.Label(

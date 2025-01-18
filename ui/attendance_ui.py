@@ -1,13 +1,15 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from tkcalendar import Calendar
 import pandas as pd
 from datetime import datetime
-
 
 class AttendanceManager(ttk.Frame):
     def __init__(self, parent, db):
         super().__init__(parent)
         self.db = db
+        self.pack(fill=tk.BOTH, expand=True)
+        self.selected_date = datetime.now().strftime("%Y-%m-%d")
         self.create_widgets()
         self.load_attendance_data()
 
@@ -16,12 +18,20 @@ class AttendanceManager(ttk.Frame):
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        # Left Panel - Check-in/out Form
-        form_frame = ttk.LabelFrame(self, text="Attendance Marking", padding=15)
-        form_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nsew")
+        # Left Panel with Calendar and Check-in Form
+        left_frame = ttk.LabelFrame(self, text="Attendance Management", padding=15)
+        left_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nsew")
+
+        # Calendar
+        self.cal = Calendar(left_frame, selectmode='day', date_pattern='y-mm-dd')
+        self.cal.grid(row=0, column=0, padx=5, pady=5)
+        self.cal.bind('<<CalendarSelected>>', self.on_date_select)
 
         # Member Selection
-        ttk.Label(form_frame, text="Member:").grid(row=0, column=0, sticky="w")
+        form_frame = ttk.Frame(left_frame)
+        form_frame.grid(row=1, column=0, pady=10)
+
+        ttk.Label(form_frame, text="Member:",style="Body.TLabel").grid(row=0, column=0, sticky="w")
         self.member_var = tk.StringVar()
         self.member_combo = ttk.Combobox(
             form_frame, textvariable=self.member_var, state="readonly"
@@ -47,7 +57,7 @@ class AttendanceManager(ttk.Frame):
         ).pack(side=tk.LEFT, padx=5)
 
         # Right Panel - Attendance List
-        list_frame = ttk.LabelFrame(self, text="Today's Attendance", padding=15)
+        list_frame = ttk.LabelFrame(self, text="Attendance Records", padding=15)
         list_frame.grid(row=0, column=1, padx=10, pady=5, sticky="nsew")
         list_frame.grid_columnconfigure(0, weight=1)
         list_frame.grid_rowconfigure(0, weight=1)
@@ -92,6 +102,10 @@ class AttendanceManager(ttk.Frame):
         y_scrollbar.grid(row=0, column=1, sticky="ns")
         x_scrollbar.grid(row=1, column=0, sticky="ew")
 
+    def on_date_select(self, event):
+        self.selected_date = self.cal.get_date()
+        self.load_attendance_data(self.selected_date)
+
     def load_members(self):
         try:
             members_df = self.db.load_sheet_data("members")
@@ -109,41 +123,26 @@ class AttendanceManager(ttk.Frame):
             return
 
         try:
-            df = self.db.load_sheet_data("attendance")
             today = datetime.now().strftime("%Y-%m-%d")
+            current_time = datetime.now().strftime("%H:%M:%S")
 
-            # Check for existing check-in
-            already_checked_in = (
-                df[
-                    (df["member_id"] == member)
-                    & (df["date"] == today)
-                    & (df["check_out"].isnull())
-                ].shape[0]
-                > 0
-            )
-
-            if already_checked_in:
-                messagebox.showwarning(
-                    "Already Checked In",
-                    "This member has already checked in today and hasn't checked out!",
-                )
-                return
-
-            # Record check-in
             attendance_data = {
                 "member_id": member,
-                "check_in": datetime.now().strftime("%H:%M:%S"),
+                "check_in": current_time,
                 "check_out": None,
                 "date": today,
-                "duration": None,
+                "duration": None
             }
 
             if self.db.mark_attendance(attendance_data):
-                self.load_attendance_data()
+                # Refresh to show today's attendance
+                self.load_attendance_data(today)
+                self.cal.selection_set(today)  # Highlight today in calendar
                 messagebox.showinfo("Success", "Check-in marked successfully!")
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to mark check-in: {str(e)}")
+
 
     def mark_check_out(self):
         member = self.member_var.get()
@@ -155,56 +154,62 @@ class AttendanceManager(ttk.Frame):
             df = self.db.load_sheet_data("attendance")
             today = datetime.now().strftime("%Y-%m-%d")
 
-            # Process check-out
-            mask = (
-                (df["member_id"] == member)
-                & (df["date"] == today)
-                & (df["check_out"].isnull())
-            )
-            if not df[mask].empty:
-                check_out_time = datetime.now()
-                df.loc[mask, "check_out"] = check_out_time.strftime("%H:%M:%S")
+            # Get member's actual ID from members sheet
+            members_df = self.db.load_sheet_data("members")
+            member_row = members_df[members_df["name"] == member]
+            if not member_row.empty:
+                actual_member_id = member_row.iloc[0]["member_id"]
+                
+                # Find member's active check-in using actual ID
+                mask = (
+                    (df["member_id"] == actual_member_id) & 
+                    (df["date"] == today) & 
+                    (df["check_out"].isnull())
+                )
 
-                # Calculate duration
-                check_in_time = datetime.strptime(
-                    df.loc[mask, "check_in"].iloc[0], "%H:%M:%S"
-                )
-                duration = check_out_time - datetime.combine(
-                    check_out_time.date(), check_in_time.time()
-                )
-                df.loc[mask, "duration"] = str(duration).split(".")[0]
+                if not df[mask].empty:
+                    check_out_time = datetime.now()
+                    df.loc[mask, "check_out"] = check_out_time.strftime("%H:%M:%S")
 
-                self.db.save_sheet_data("attendance", df)
-                self.load_attendance_data()
-                messagebox.showinfo("Success", "Check-out marked successfully!")
-            else:
-                messagebox.showwarning(
-                    "Not Checked In", "Member has not checked in today!"
-                )
+                    check_in_time = datetime.strptime(df.loc[mask, "check_in"].iloc[0], "%H:%M:%S")
+                    duration = check_out_time - datetime.combine(check_out_time.date(), check_in_time.time())
+                    df.loc[mask, "duration"] = str(duration).split(".")[0]
+
+                    if self.db.save_sheet_data("attendance", df):
+                        self.load_attendance_data(today)
+                        messagebox.showinfo("Success", "Check-out marked successfully!")
+                else:
+                    messagebox.showwarning("Not Checked In", "Member has not checked in today!")
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to mark check-out: {str(e)}")
 
-    def load_attendance_data(self):
-        # Refresh attendance display
+ # In attendance_ui.py
+    def load_attendance_data(self, date=None):
+        if date is None:
+            date = datetime.now().strftime("%Y-%m-%d")
+
         for item in self.tree.get_children():
             self.tree.delete(item)
 
-        try:
-            attendance_df = self.db.load_sheet_data("attendance")
+        try:       
+            # Get attendance records
+            attendance_df = self.db.get_attendance_history(date=date)
+            
             if not attendance_df.empty:
+                # Get member names from members sheet
+                members_df = self.db.load_sheet_data("members")
+                
+                # Map member_id to member names for display
                 for _, row in attendance_df.iterrows():
-                    self.tree.insert(
-                        "",
-                        "end",
-                        values=(
-                            row["id"],
-                            row["member_id"],
-                            row["check_in"],
-                            row["check_out"],
-                            row["date"],
-                            row["duration"],
-                        ),
-                    )
+                    member_name = members_df[members_df["member_id"] == row["member_id"]]["name"].iloc[0]
+                    self.tree.insert("", "end", values=(
+                        row["member_id"],
+                        member_name,  # Display actual member_id
+                        row["check_in"],
+                        row["check_out"],
+                        row["date"],
+                        row["duration"]
+                    ))
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load attendance: {str(e)}")

@@ -1,29 +1,39 @@
-from tkinter import ttk
-
 # Core app settings
 APP_NAME = "Gym Management System"
 APP_VERSION = "1.0.0"
 
 # Database paths
-MEMBERS_DB = "database/members.xlsx"
-PAYMENTS_DB = "database/payments.xlsx"
-ATTENDANCE_DB = "database/attendance.xlsx"
+DATABASE_DIR = "database"
+DATABASE_FILE = "database/gym_database.xlsx"
+BACKUP_DIR = "database/backup"
+LOG_DIR = "logs"
 
-# Theme color palette
-PRIMARY_COLOR = "#2c3e50"
-SECONDARY_COLOR = "#34495e"
-ACCENT_COLOR = "#3498db"
-SUCCESS_COLOR = "#2ecc71"
-WARNING_COLOR = "#f1c40f"
-ERROR_COLOR = "#e74c3c"
+# Sheet names
+SHEET_NAMES = {
+    "members": "Members",
+    "payments": "Payments",
+    "attendance": "Attendance"
+}
 
+# Theme colors
+COLORS = {
+    "primary": "#000000",    # Black
+    "secondary": "#FFFFFF",  # White
+    "text": "#000000",      # Black
+    "button": "#000000",    # Black
+    "button_text": "#FFFFFF" # White
+}
 
-# Theme configuration
-def set_theme(root):
-    style = ttk.Style(root)
-    style.theme_use("clam")
+# UI Settings
+WINDOW_SIZE = "1024x768"
+PADDING = 10
+BUTTON_WIDTH = 20
 
-    # Base widget styles
-    style.configure("TLabel", padding=5)
-    style.configure("TButton", padding=5)
-    style.configure("TEntry", padding=5)
+# Date formats
+DATE_FORMAT = "%Y-%m-%d"
+DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+TIME_FORMAT = "%H:%M:%S"
+
+# File extensions
+EXCEL_EXTENSION = ".xlsx"
+LOG_EXTENSION = ".log"

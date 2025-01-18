@@ -8,6 +8,7 @@ class MembersManager(ttk.Frame):
     def __init__(self, parent, db):
         super().__init__(parent)
         self.db = db
+        self.pack(fill=tk.BOTH, expand=True)
         self.create_widgets()
         self.load_members_data()
 
@@ -21,36 +22,40 @@ class MembersManager(ttk.Frame):
         form_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nsew")
 
         # Form Fields
-        ttk.Label(form_frame, text="Name:").grid(row=0, column=0, sticky="w")
+        ttk.Label(form_frame, text="Name:",style="Body.TLabel").grid(row=0, column=0, sticky="w")
         self.name_entry = ttk.Entry(form_frame)
         self.name_entry.grid(row=0, column=1, padx=5, pady=5)
 
-        ttk.Label(form_frame, text="Contact:").grid(row=1, column=0, sticky="w")
+        ttk.Label(form_frame, text="Contact:",style="Body.TLabel").grid(row=1, column=0, sticky="w")
         self.contact_entry = ttk.Entry(form_frame)
         self.contact_entry.grid(row=1, column=1, padx=5, pady=5)
 
-        ttk.Label(form_frame, text="Email:").grid(row=2, column=0, sticky="w")
+        ttk.Label(form_frame, text="Email:",style="Body.TLabel").grid(row=2, column=0, sticky="w")
         self.email_entry = ttk.Entry(form_frame)
         self.email_entry.grid(row=2, column=1, padx=5, pady=5)
 
-        ttk.Label(form_frame, text="Membership Type:").grid(row=3, column=0, sticky="w")
+        ttk.Label(form_frame, text="Membership Type:",style="Body.TLabel").grid(row=3, column=0, sticky="w")
         self.membership_type = ttk.Combobox(
-            form_frame, values=["Monthly", "Quarterly", "Yearly"]
+            form_frame, values=["Monthly", "Quarterly", "Yearly"], 
         )
         self.membership_type.grid(row=3, column=1, padx=5, pady=5)
 
         # Action Buttons
-        btn_frame = ttk.Frame(form_frame)
-        btn_frame.grid(row=4, column=0, columnspan=2, pady=10)
+        top_btn_frame = ttk.Frame(form_frame)
+        top_btn_frame.grid(row=4, column=0, columnspan=2, pady=10)
+        
+        
+        bottom_btn_frame = ttk.Frame(form_frame)
+        bottom_btn_frame.grid(row=5, column=0, columnspan=2, pady=10)
 
-        ttk.Button(btn_frame, text="Add Member", command=self.add_member).pack(
+        ttk.Button(top_btn_frame, text="Add Member", command=self.add_member,style="Primary.TButton").pack(
             side=tk.LEFT, padx=5
         )
-        ttk.Button(btn_frame, text="Update", command=self.update_member).pack(
+        ttk.Button(top_btn_frame, text="Update", command=self.update_member,style="Primary.TButton").pack(
             side=tk.LEFT, padx=5
         )
-        ttk.Button(btn_frame, text="Delete", command=self.delete_member).pack(
-            side=tk.LEFT, padx=5
+        ttk.Button(bottom_btn_frame, text="Delete", command=self.delete_member,style="Primary.TButton").pack(
+            side=tk.TOP, padx=10
         )
 
         # Right Panel - Members List with Search
@@ -158,6 +163,7 @@ class MembersManager(ttk.Frame):
             "contact": self.contact_entry.get(),
             "email": self.email_entry.get(),
             "membership_type": self.membership_type.get(),
+            "joining_date": datetime.now().strftime("%Y-%m-%d"),
             "status": "Active",
         }
 
